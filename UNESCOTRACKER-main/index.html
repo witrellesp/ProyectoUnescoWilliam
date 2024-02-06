@@ -2,134 +2,192 @@
 <html lang="en">
   <head>
     <style>
+      html,
       body {
+        height: 100%;
         margin: 0;
+        font-family: "Trebuchet MS", sans-serif;
+        background-color: violet;
+        padding: 0;
+        overflow: hidden;
       }
 
       .test {
-        display: block;
-        position: fixed;
-        z-index: 200;
+        position: absolute;
         padding: 20px;
         font-size: 40px;
-        font-family: "Trebuchet MS", sans-serif;
+        top: 20px;
+        left: 20px;
+        z-index: 200;
       }
 
       .Pcultural {
         color: rgb(128, 189, 255);
       }
+
       .Pnatural {
         color: rgb(42, 245, 48);
       }
+
       .Pmixed {
         color: rgb(246, 250, 32);
       }
+
       .Pmixed,
       .Pcultural,
       .Pnatural:hover {
         cursor: pointer;
       }
+      /******************/
+      #globeViz {
+        width: 300px; /* Ancho ajustado */
+        height: 200px; /* Altura ajustada */
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 25px;
+      }
+
+      /*//////////////////////////*/
+      .search-container {
+        position: absolute; /* Posicionamiento absoluto */
+        top: 0; /* Arriba del todo */
+        left: 0; /* Izquierda del todo */
+        padding: 20px; /* Espacio alrededor para no pegarse a los bordes de la pantalla */
+        display: flex; /* Utiliza Flexbox para la disposición */
+        align-items: center; /* Centra verticalmente los elementos dentro del contenedor */
+      }
+
+      #countrySearch {
+        flex-grow: 1; /* Permite que la barra de búsqueda ocupe el espacio disponible */
+        margin-right: 1px; /* Espacio entre la barra de búsqueda y el botón */
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #a64fc0;
+        border-radius: 4px;
+      }
+
+      button {
+        padding: 10px 15px; /* Ajusta el padding para que el botón tenga una apariencia equilibrada */
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        background-color: #a64fc0; /* Verde para acción */
+        color: white;
+        cursor: pointer; /* Cambia el cursor a una mano cuando pasas sobre el botón */
+      }
+
+      button:hover {
+        background-color: #a04582; /* Un poco más oscuro al pasar el mouse */
+      }
     </style>
     <script src="//unpkg.com/globe.gl"></script>
   </head>
+
   <body>
     <div class="test">
       <p onclick="culturalClick()" class="Pcultural">• Cultural</p>
       <p onclick="naturalClick()" class="Pnatural">• Natural</p>
       <p onclick="mixedClick()" class="Pmixed">• Mixed</p>
-      <input
-        type="text"
-        placeholder="Rechercher un pays.."
-        id="countrySearch"
-      />
-      <button onclick="goToCountry()">Aller au pays</button>
+
+      <div class="search-container">
+        <input
+          type="text"
+          placeholder="Rechercher un pays.."
+          id="countrySearch"
+        />
+
+        <button onclick="goToCountry()">Go</button>
+      </div>
     </div>
 
-    <div id="globeViz"></div>
+    <div class="globe-container"></div>
+    <div id="globeViz">
+      <script>
+        let category;
+        let i;
+        let globeInstance; // Declare globeInstance in the global scope
 
-    <script>
-      let category;
-      let i;
-      let globeInstance; // Declare globeInstance in the global scope
+        // Fichier json contenant toutes les infos
+        fetch("datasets/real_planet_unesco.json")
+          .then((res) => res.json())
+          .then((places) => {
+            // Initialisation globe
+            globeInstance = Globe()
+              .globeImageUrl(
+                "//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+              )
+              .backgroundImageUrl(
+                "//unpkg.com/three-globe/example/img/night-sky.png"
+              )
+              .labelsData(places)
+              .labelLat((d) => d.latitude)
+              .labelLng((d) => d.longitude)
+              .labelText((d) => d.name_en)
+              .labelSize(0.03)
+              .labelDotRadius(0.21)
+              .labelColor((d) => {
+                if (d.category == "Cultural") {
+                  return "rgb(128, 189, 255)";
+                } else if (d.category == "Natural") {
+                  return "rgb(42, 245, 48)";
+                } else if (d.category == "Mixed") {
+                  return "rgb(246, 250, 32)";
+                }
+              })
+              .labelResolution(2)(document.getElementById("globeViz"));
 
-      // Fichier json contenant toutes les infos
-      fetch("datasets/real_planet_unesco.json")
-        .then((res) => res.json())
-        .then((places) => {
-          // Initialisation globe
-          globeInstance = Globe()
-            .globeImageUrl(
-              "//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-            )
-            .backgroundImageUrl(
-              "//unpkg.com/three-globe/example/img/night-sky.png"
-            )
-            .labelsData(places)
-            .labelLat((d) => d.latitude)
-            .labelLng((d) => d.longitude)
-            .labelText((d) => d.name_en)
-            .labelSize(0.03)
-            .labelDotRadius(0.21)
-            .labelColor((d) => {
-              if (d.category == "Cultural") {
-                return "rgb(128, 189, 255)";
-              } else if (d.category == "Natural") {
-                return "rgb(42, 245, 48)";
-              } else if (d.category == "Mixed") {
-                return "rgb(246, 250, 32)";
-              }
-            })
-            .labelResolution(2)(document.getElementById("globeViz"));
+            globeInstance.onLabelClick((label, event, coords) => {
+              window.open(label.link, "_blank");
+            });
 
-          globeInstance.onLabelClick((label, event, coords) => {
-            window.open(label.link, "_blank");
+            globeInstance.pointOfView({ lat: 47, lng: 18, altitude: 2 });
           });
 
-          globeInstance.pointOfView({ lat: 47, lng: 18, altitude: 2 });
-        });
+        function goToCountry() {
+          var inputCountry = document.getElementById("countrySearch").value;
+          fetch("datasets/countries-positions.json")
+            .then((response) => response.json())
+            .then((jsonData) => {
+              if (jsonData && jsonData.ref_country_codes) {
+                var countryData = jsonData.ref_country_codes.find(function (
+                  country
+                ) {
+                  return (
+                    country.country.toLowerCase() === inputCountry.toLowerCase()
+                  );
+                });
 
-      function goToCountry() {
-        var inputCountry = document.getElementById("countrySearch").value;
-        fetch("datasets/countries-positions.json")
-          .then((response) => response.json())
-          .then((jsonData) => {
-            if (jsonData && jsonData.ref_country_codes) {
-              var countryData = jsonData.ref_country_codes.find(function (
-                country
-              ) {
-                return (
-                  country.country.toLowerCase() === inputCountry.toLowerCase()
-                );
-              });
-
-              if (countryData) {
-                globeInstance.pointOfView(
-                  {
-                    lat: countryData.latitude,
-                    lng: countryData.longitude,
-                    altitude: 2,
-                  },
-                  3000
-                );
-
-                // Delay for 3000 milliseconds (3 seconds) before zooming in
-                setTimeout(() => {
-                  // Zoom in
+                if (countryData) {
                   globeInstance.pointOfView(
                     {
                       lat: countryData.latitude,
                       lng: countryData.longitude,
-                      altitude: 0.3,
+                      altitude: 2,
                     },
                     3000
                   );
-                }, 3000);
-              } else {
-                console.log("Pays non trouvé dans le JSON.");
+
+                  // Delay for 3000 milliseconds (3 seconds) before zooming in
+                  setTimeout(() => {
+                    // Zoom in
+                    globeInstance.pointOfView(
+                      {
+                        lat: countryData.latitude,
+                        lng: countryData.longitude,
+                        altitude: 0.3,
+                      },
+                      3000
+                    );
+                  }, 3000);
+                } else {
+                  console.log("Pays non trouvé dans le JSON.");
+                }
               }
-            }
-          });
-      }
-    </script>
+            });
+        }
+      </script>
+    </div>
   </body>
 </html>
